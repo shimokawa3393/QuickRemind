@@ -1,0 +1,77 @@
+# Xcode Build Artifacts
+build/
+DerivedData/
+
+# User-specific Xcode settings
+Config.xcconfig
+!Config.xcconfig.example
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout   
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserdatad/
+
+# Xcode workspace-related
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives & dSYMs
+*.xcarchive
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Certificates / Provisioning Profiles
+*.mobileprovision
+*.provisionprofile
+*.cer
+*.p12
+*.pem
+
+# Environment variables
+.env
+.env.*
+
+# Temporary files
+*.hmap
+*.module
+*.tbd
+*.xcframework
+*.xcfilelist
+
+# IDE helpers
+.idea/
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+contents.xcplayground
+*.playground
+*.playgroundbook
+
+# Test logs / artifacts
+*.testresult
+TestResults/
+*.log
+*.crash

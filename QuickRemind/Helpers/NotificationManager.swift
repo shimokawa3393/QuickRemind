@@ -1,0 +1,23 @@
+import UserNotifications
+
+// MARK: - 通知を登録する
+struct NotificationManager {
+    static func register(_ reminder: Reminder) {
+        let content = UNMutableNotificationContent()
+        content.title = "QuickRemind"
+        content.body = reminder.title.isEmpty ? "（タイトル未入力）" : reminder.title
+        content.sound = .default
+
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        let request = UNNotificationRequest(identifier: reminder.id.uuidString, content: content, trigger: trigger)
+
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [reminder.id.uuidString])
+        center.add(request)
+    }
+
+    static func cancel(_ id: UUID) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+    }
+}
