@@ -44,13 +44,25 @@ struct ContentView: View {
             saveCategories()
         }
     }
-
+    
     
     // MARK: - アクションボタンを表示する
     private func actionButtons() -> some View {
         HStack {
             Button(action: {
-                guard editingReminder == nil else { return }
+                if let current = editingReminder {
+                    if current.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        current.title = "（タイトルなし）"
+                    }
+                    
+                    // 通知を再登録（同じIDで上書き）
+                    NotificationManager.register(current)
+                    
+                    saveReminders()
+                    sortReminders()
+                    editingReminder = nil
+                }
+                
                 let selected = selectedCategory == "すべて" ? (categories.first ?? "カテゴリーなし") : selectedCategory
                 let newReminder = Reminder(id: UUID(), title: "", date: Date().addingTimeInterval(60), category: selected)
                 reminders.append(newReminder)
@@ -64,7 +76,7 @@ struct ContentView: View {
         }
     }
     
-
+    
     // MARK: - カテゴリスクロールバーを表示する
     private func categoryScrollBar() -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -85,7 +97,7 @@ struct ContentView: View {
         }
     }
     
-
+    
     // MARK: - リマインダーリストを表示する
     private func reminderList() -> some View {
         List {
@@ -133,7 +145,7 @@ struct ContentView: View {
             .sorted { $0.date < $1.date }
     }
     
-
+    
     // MARK: - リマインダーを日付順にする
     private func sortReminders() {
         reminders.sort { $0.date < $1.date }

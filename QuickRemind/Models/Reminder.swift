@@ -29,6 +29,7 @@ struct ReminderData: Codable {
     var title: String
     var date: Date
     var category: String
+
     
     func toReminder() -> Reminder {
         Reminder(id: id, title: title, date: date, category: category)

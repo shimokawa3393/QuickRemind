@@ -4,8 +4,8 @@ import UserNotifications
 struct NotificationManager {
     static func register(_ reminder: Reminder) {
         let content = UNMutableNotificationContent()
-        content.title = "QuickRemind"
-        content.body = reminder.title.isEmpty ? "（タイトル未入力）" : reminder.title
+        content.title = reminder.title.isEmpty ? "（タイトル未入力）" : reminder.title
+        content.body = reminder.date.formatted(.dateTime.hour().minute())
         content.sound = .default
 
         let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.date)
