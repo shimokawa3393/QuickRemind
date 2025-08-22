@@ -23,7 +23,10 @@ struct ReminderRowView: View {
                     .disableAutocorrection(true)
                     .textInputAutocapitalization(.never)
 
-                DatePicker("日時", selection: $reminder.date, in: Date()..., displayedComponents: [.date, .hourAndMinute])
+                DatePicker("日時",
+                            selection: $reminder.date,
+                            in: minSelectableDate...,
+                            displayedComponents: [.date, .hourAndMinute])
 
                 Picker("カテゴリー", selection: $reminder.category) {
                     ForEach(categories, id: \.self) { cat in
@@ -62,11 +65,20 @@ struct ReminderRowView: View {
             if editingReminder?.id == reminder.id {
                 registerAndClose(reminder)
             } else {
+                // ここで最低1分先に寄せる（現在や過去を選んでいても救済）
+                if reminder.date <= Date() {
+                    reminder.date = minSelectableDate
+                }
                 editingReminder = reminder
             }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
+    }
+
+    // MARK: - 最小選択可能日時を設定する
+    private var minSelectableDate: Date {
+        Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
     }
 
     // MARK: - 日時をフォーマットする
@@ -79,7 +91,7 @@ struct ReminderRowView: View {
 
     // MARK: - リマインダーを登録する
     private func registerAndClose(_ reminder: Reminder) {
-        if reminder.date <= Date() {
+        if reminder.date < Date() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 showAlert = true
             }

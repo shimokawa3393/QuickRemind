@@ -79,7 +79,6 @@ struct ContentView: View {
             }) {
                 Image(systemName: "info.circle")
             }
-            .buttonStyle(BorderlessButtonStyle())
         }
         .alert("操作のヒント", isPresented: $showHelp) {
             Button("OK", role: .cancel) { }
