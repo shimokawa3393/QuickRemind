@@ -81,7 +81,7 @@ struct CategoryManagerView: View {
             .alert("操作のヒント", isPresented: $showHelp) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("カテゴリーの削除：左にスワイプ\n並び替え：長押しでドラッグ")
+                Text("並び替え：長押しでドラッグ\nカテゴリーの削除：左にスワイプ")
             }
         }
     }

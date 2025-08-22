@@ -11,13 +11,14 @@ import UserNotifications // 通知を送信するために必要
 
 // MARK: - メイン画面
 struct ContentView: View {
-    @State private var reminders: [Reminder] = [] // リマインダーを管理する
-    @State private var editingReminder: Reminder? = nil // 編集中のリマインダーを管理する
-    @State private var showAlert: Bool = false // アラートを表示するためのフラグ
-    @State private var showPermissionAlert: Bool = false // 通知の許可を表示するためのフラグ
-    @State private var selectedCategory: String = "すべて" // 選択されたカテゴリを管理する
-    @State private var categories: [String] = [] // カテゴリを管理する
-    @State private var showCategoryManager: Bool = false // カテゴリ管理画面を表示するためのフラグ
+    @State private var reminders: [Reminder] = []   
+    @State private var editingReminder: Reminder? = nil 
+    @State private var showAlert: Bool = false 
+    @State private var showPermissionAlert: Bool = false 
+    @State private var selectedCategory: String = "すべて" 
+    @State private var categories: [String] = [] 
+    @State private var showCategoryManager: Bool = false 
+    @State private var showHelp: Bool = false 
     
     var body: some View {
         NavigationView {
@@ -73,6 +74,17 @@ struct ContentView: View {
             Button(action: { showCategoryManager = true }) {
                 Image(systemName: "gearshape")
             }
+            Button(action: {
+                showHelp = true
+            }) {
+                Image(systemName: "info.circle")
+            }
+            .buttonStyle(BorderlessButtonStyle())
+        }
+        .alert("操作のヒント", isPresented: $showHelp) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("編集ON/OFF：リマインダー枠内をタップ\nリマインダーの削除：左にスワイプ")
         }
     }
     
