@@ -9,6 +9,7 @@ struct ReminderRowView: View {
     @Binding var showAlert: Bool
     var onRegister: () -> Void
     var categories: [String]
+    var focused: FocusState<UUID?>.Binding
     
     var isEditing: Bool {
         editingReminder?.id == reminder.id
@@ -18,10 +19,10 @@ struct ReminderRowView: View {
         VStack(alignment: .leading, spacing: 8) {
             if isEditing {
                 TextField("タイトルを入力", text: $reminder.title)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .textContentType(.none)
-                    .disableAutocorrection(true)
-                    .textInputAutocapitalization(.never)
+                    .textFieldStyle(RoundedBorderTextFieldStyle()) // テキストフィールドのスタイル
+                    .disableAutocorrection(true)                   // 自動修正を無効化
+                    .textInputAutocapitalization(.never)           // テキストフィールドのキャピタライゼーションを無効化
+                    .focused(focused, equals: reminder.id)                        // フォーカスを設定
 
                 DatePicker("日時",
                             selection: $reminder.date,

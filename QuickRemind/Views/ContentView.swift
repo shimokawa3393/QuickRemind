@@ -11,19 +11,31 @@ import UserNotifications // 通知を送信するために必要
 
 // MARK: - メイン画面
 struct ContentView: View {
-    @State private var reminders: [Reminder] = []   
-    @State private var editingReminder: Reminder? = nil 
-    @State private var showAlert: Bool = false 
-    @State private var showPermissionAlert: Bool = false 
-    @State private var selectedCategory: String = "すべて" 
-    @State private var categories: [String] = [] 
-    @State private var showCategoryManager: Bool = false 
-    @State private var showHelp: Bool = false 
+    @State private var reminders: [Reminder] = []
+    @State private var editingReminder: Reminder? = nil
+    @State private var showAlert: Bool = false
+    @State private var showPermissionAlert: Bool = false
+    @State private var selectedCategory: String = "すべて"
+    @State private var categories: [String] = []
+    @State private var showCategoryManager: Bool = false
+    @State private var showHelp: Bool = false
+    @FocusState private var focusedID: UUID?
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 categoryScrollBar()
+                
+                HStack {
+                    Spacer()
+                    Button(action: addReminder) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.accentColor)
+                            .padding()
+                    }
+                }
+                
                 reminderList()
             }
             .sheet(isPresented: $showCategoryManager) {
@@ -50,29 +62,8 @@ struct ContentView: View {
     // MARK: - アクションボタンを表示する
     private func actionButtons() -> some View {
         HStack {
-            Button(action: {
-                if let current = editingReminder {
-                    if current.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        current.title = "（タイトルなし）"
-                    }
-                    
-                    // 通知を再登録（同じIDで上書き）
-                    NotificationManager.register(current)
-                    
-                    saveReminders()
-                    sortReminders()
-                    editingReminder = nil
-                }
-                
-                let selected = selectedCategory == "すべて" ? (categories.first ?? "カテゴリーなし") : selectedCategory
-                let newReminder = Reminder(id: UUID(), title: "", date: Date().addingTimeInterval(60), category: selected)
-                reminders.append(newReminder)
-                editingReminder = newReminder
-            }) {
-                Image(systemName: "plus")
-            }
             Button(action: { showCategoryManager = true }) {
-                Image(systemName: "gearshape")
+                Image(systemName: "tag")
             }
             Button(action: {
                 showHelp = true
@@ -109,27 +100,71 @@ struct ContentView: View {
     }
     
     
+    // MARK: - リマインダーを追加する
+    private func addReminder() {
+        if let current = editingReminder {
+            if current.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                current.title = "（タイトルなし）"
+            }
+            
+            // 通知を再登録（同じIDで上書き）
+            NotificationManager.register(current)
+            saveReminders()
+            sortReminders()
+            editingReminder = nil
+        }
+        
+        let selected = selectedCategory == "すべて"
+        ? (categories.first ?? "カテゴリーなし")
+        : selectedCategory
+        
+        let newReminder = Reminder(
+            id: UUID(),
+            title: "",
+            date: Date().addingTimeInterval(60),
+            category: selected
+        )
+        
+        reminders.append(newReminder)
+        editingReminder = newReminder // ← これがトリガーになってスクロール＆フォーカスが走る
+    }
+    
+    
+    
     // MARK: - リマインダーリストを表示する
     private func reminderList() -> some View {
-        List {
-            ForEach(filteredReminders()) { reminder in
-                ReminderRowView(
-                    reminder: reminder,
-                    editingReminder: $editingReminder,
-                    showAlert: $showAlert,
-                    onRegister: {
-                        tryRegister(reminder)
-                        sortReminders()
-                    },
-                    categories: categories,
-                )
-                .id(reminder.id)
-                .listRowSeparator(.hidden)
+        ScrollViewReader { proxy in
+            List {
+                ForEach(filteredReminders()) { reminder in                    
+                    ReminderRowView(
+                        reminder: reminder,
+                        editingReminder: $editingReminder,
+                        showAlert: $showAlert,
+                        onRegister: {
+                            tryRegister(reminder)
+                            sortReminders()
+                        },
+                        categories: categories,
+                        focused: $focusedID,
+                    )
+                    .id(reminder.id) // ← 必須                    
+                }
+                .onDelete(perform: deleteReminder)
             }
-            .onDelete(perform: deleteReminder)
+            .listStyle(PlainListStyle())
+            .onChange(of: editingReminder?.id) { id in
+                guard let id else { return }
+                // 追加直後の描画完了を待ってからスクロール
+                DispatchQueue.main.async {
+                    withAnimation(.easeInOut) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                    focusedID = id
+                }
+            }
         }
-        .listStyle(PlainListStyle())
     }
+    
     
     
     // MARK: - リマインダーを登録する
