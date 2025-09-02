@@ -5,12 +5,12 @@ struct CalendarPickerView: View {
     let calendars: [EKCalendar]
     @Binding var selectedCalendarID: String?
     let onClose: () -> Void
-
+    
     // 事前計算
     private var editableCalendars: [EKCalendar] {
         calendars.filter { $0.allowsContentModifications }
     }
-
+    
     // Optionalを潰した selection
     private var selectionBinding: Binding<String> {
         Binding(
@@ -18,7 +18,7 @@ struct CalendarPickerView: View {
             set: { selectedCalendarID = $0.isEmpty ? nil : $0 }
         )
     }
-
+    
     var body: some View {
         NavigationView {
             Form {

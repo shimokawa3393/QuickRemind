@@ -243,7 +243,8 @@ struct ContentView: View {
         if isCalendarAuthorized {
             upsertCalendarEvent(reminder: saveReminder)
         } 
-        
+
+        saveReminders()
         sortReminders()
         reminders = reminders.map { $0 }
     }
@@ -384,7 +385,7 @@ struct ContentView: View {
             showCalendarAlert = true
             
         @unknown default:
-            calendarMessage = "権限の状態を判定できませんでした。"
+            calendarMessage = "フルアクセスを許可でカレンダー連携を有効にしてください。"
             showOpenSettings = false
             showCalendarAlert = true
         }
@@ -436,7 +437,6 @@ struct ContentView: View {
             try store.save(event, span: .thisEvent)
             if let idx = reminders.firstIndex(where: { $0.id == reminder.id }) {
                 reminders[idx].calendarID = event.eventIdentifier
-                saveReminders()
             }
             print("✅ カレンダーにイベントを保存しました")
         } catch {
