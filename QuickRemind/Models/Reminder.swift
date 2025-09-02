@@ -14,12 +14,14 @@ class Reminder: Identifiable, ObservableObject, Equatable{ // Identifiable: è­˜å
     @Published var title: String
     @Published var date: Date
     @Published var category: String
+    @Published var calendarID: String?
     
-    init(id: UUID, title: String, date: Date, category: String) {
+    init(id: UUID, title: String, date: Date, category: String, calendarID: String? = nil) {
         self.id = id
         self.title = title
         self.date = date
         self.category = category
+        self.calendarID = calendarID
     }
 }
 
@@ -29,10 +31,11 @@ struct ReminderData: Codable {
     var title: String
     var date: Date
     var category: String
+    var calendarID: String?
 
     
     func toReminder() -> Reminder {
-        Reminder(id: id, title: title, date: date, category: category)
+        Reminder(id: id, title: title, date: date, category: category, calendarID: calendarID)
     }
     
     init(from reminder: Reminder) {
@@ -40,5 +43,6 @@ struct ReminderData: Codable {
         self.title = reminder.title
         self.date = reminder.date
         self.category = reminder.category
+        self.calendarID = reminder.calendarID
     }
 }

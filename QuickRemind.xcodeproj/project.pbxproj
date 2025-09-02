@@ -31,9 +31,22 @@
 		3E6F159E2E45E2CA0048C7B0 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3E768AFE2E66D609004B8872 /* Exceptions for "QuickRemind" folder in "QuickRemind" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3E6F14E62E3F84860048C7B0 /* QuickRemind */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3E6F14E92E3F84860048C7B0 /* QuickRemind */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3E768AFE2E66D609004B8872 /* Exceptions for "QuickRemind" folder in "QuickRemind" target */,
+			);
 			path = QuickRemind;
 			sourceTree = "<group>";
 		};
@@ -405,8 +418,10 @@
 				DEVELOPMENT_TEAM = KG5CW5DRCQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QuickRemind/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = QuickRemind;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "リマインダーをカレンダーに追加するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -442,8 +457,10 @@
 				DEVELOPMENT_TEAM = KG5CW5DRCQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QuickRemind/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = QuickRemind;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "リマインダーをカレンダーに追加するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

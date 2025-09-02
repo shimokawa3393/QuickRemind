@@ -35,7 +35,7 @@ struct CategoryManagerView: View {
                     Button(action: {
                         showHelp = true
                     }) {
-                        Image(systemName: "info.circle")
+                        Image(systemName: "questionmark.circle")
                     }
                     .buttonStyle(BorderlessButtonStyle())
                 }
