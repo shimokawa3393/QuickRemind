@@ -1,7 +1,7 @@
 import UserNotifications
 
 // MARK: - 通知を登録する
-struct NotificationManager {
+struct NotificationService {
     static func register(_ reminder: Reminder) {
         let content = UNMutableNotificationContent()
         content.title = reminder.title.isEmpty ? "（タイトル未入力）" : reminder.title

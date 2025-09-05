@@ -12,7 +12,7 @@ import UserNotifications // 通知を送信するために必要
 final class AppInitializer {
     static let shared = AppInitializer()
     private init() {}
-
+    
     func initialize() {
         // 例：iCloud初期同期、データ移行、設定のデフォルト登録など
         // setupICloudIfNeeded()
@@ -39,14 +39,14 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 // Pushを使わないなら丸ごと削除してOK。
 final class AppDelegate: NSObject, UIApplicationDelegate {
     @AppStorage("deviceToken") var deviceToken: String = ""
-
+    
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceTokenData: Data) {
         let token = deviceTokenData.map { String(format: "%02.2hhx", $0) }.joined()
         deviceToken = token
         print("📮 APNs token: \(token)")
     }
-
+    
     func application(_ application: UIApplication,
                      didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("❌ APNs登録失敗: \(error.localizedDescription)")
@@ -59,7 +59,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct QuickRemindApp: App {
     // （任意）APNsトークンを拾う場合だけ有効化
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
+    
     // MARK: - デバイストークン
     @AppStorage("deviceToken") var deviceToken: String = ""
     
@@ -69,7 +69,7 @@ struct QuickRemindApp: App {
         
         let center = UNUserNotificationCenter.current() 
         center.delegate = NotificationDelegate.shared
-
+        
         // 通知の許可をリクエスト
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if granted {
@@ -83,11 +83,11 @@ struct QuickRemindApp: App {
             }
         }
     }
-
+    
     // MARK: - ビュー
     var body: some Scene {
         WindowGroup { // ウィンドウグループを表示する
-            ContentView() // コンテンツを表示する
+            ReminderView() // コンテンツを表示する
         }
     }
 }

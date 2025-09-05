@@ -28,7 +28,7 @@ struct CategoryView: View {
                 }
                 
                 // 既存カテゴリーを編集する
-                Section(header: 
+                Section(header:
                             HStack {
                     Text("既存カテゴリー")
                     Spacer()
@@ -50,7 +50,7 @@ struct CategoryView: View {
                             }
                         } else {
                             Text(categories[index])
-                        } 
+                        }
                     }
                     
                     .onDelete { indexSet in
@@ -75,11 +75,11 @@ struct CategoryView: View {
             .navigationBarItems(
                 leading: Button("閉じる") { dismiss() },
                 trailing: Button(isEditing ? "完了" : "編集") {
-                    CategoryManager.toggleEditing(isEditing: &isEditing, 
-                                                  categories: &categories, reminders: &reminders, 
+                    CategoryService.toggleEditing(isEditing: &isEditing,
+                                                  categories: &categories, reminders: &reminders,
                                                   editedNames: &editedNames)
                 }
-            )  
+            )
             .alert("操作のヒント", isPresented: $showHelp) {
                 Button("OK", role: .cancel) { }
             } message: {

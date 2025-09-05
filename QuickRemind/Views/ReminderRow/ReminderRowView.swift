@@ -14,6 +14,11 @@ struct ReminderRowView: View {
     var isEditing: Bool {
         editingReminder?.id == reminder.id
     }
+
+    // MARK: - 最小選択可能日時を設定する
+    private var minSelectableDate: Date {
+        Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -23,25 +28,25 @@ struct ReminderRowView: View {
                     .disableAutocorrection(true)                   // 自動修正を無効化
                     .textInputAutocapitalization(.never)           // テキストフィールドのキャピタライゼーションを無効化
                     .focused(focused, equals: reminder.id)                        // フォーカスを設定
-
+                
                 DatePicker("日時",
-                            selection: $reminder.date,
-                            in: minSelectableDate...,
-                            displayedComponents: [.date, .hourAndMinute])
-
+                           selection: $reminder.date,
+                           in: minSelectableDate...,
+                           displayedComponents: [.date, .hourAndMinute])
+                
                 Picker("カテゴリー", selection: $reminder.category) {
                     ForEach(categories, id: \.self) { cat in
                         Text(cat).tag(cat)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-
+                
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(reminder.title.isEmpty ? "（タイトルなし）" : reminder.title)
                         .font(.headline)
                     
-                    Text(formattedDate(reminder.date))
+                    Text(DateFormat.formattedDate(reminder.date))
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(1)
@@ -75,47 +80,5 @@ struct ReminderRowView: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-    }
-
-    // MARK: - 最小選択可能日時を設定する
-    private var minSelectableDate: Date {
-        Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
-    }
-
-    // MARK: - 日時をフォーマットする
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "yyyy / M / d (E) HH:mm"
-        return formatter.string(from: date)
-    }
-
-    // MARK: - リマインダーを登録する
-    private func registerAndClose(_ reminder: Reminder) {
-        if reminder.date < Date() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showAlert = true
-            }
-            return
-        }
-
-        let content = UNMutableNotificationContent()
-        content.title = reminder.title.isEmpty ? "（タイトル未入力）" : reminder.title  
-        content.body = reminder.date.formatted(.dateTime.hour().minute())
-        content.sound = .default
-
-        let triggerDate = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute],
-            from: reminder.date
-        )
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
-        let request = UNNotificationRequest(identifier: reminder.id.uuidString, content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [reminder.id.uuidString])
-        UNUserNotificationCenter.current().add(request)
-
-        onRegister()
-        editingReminder = nil
     }
 }

@@ -1,7 +1,7 @@
 import UIKit
 import SwiftUI
 
-enum AppReview {    
+enum AppReview {
     
     // MARK: - アプリを評価する
     @MainActor

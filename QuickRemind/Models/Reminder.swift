@@ -27,12 +27,12 @@ class Reminder: Identifiable, ObservableObject, Equatable{ // Identifiable: 識�
 
 // 保存用にObservableObjectを排除したシンプルな構造体
 struct ReminderData: Codable {
-    let id: UUID 
+    let id: UUID
     var title: String
     var date: Date
     var category: String
     var calendarID: String?
-
+    
     
     func toReminder() -> Reminder {
         Reminder(id: id, title: title, date: date, category: category, calendarID: calendarID)

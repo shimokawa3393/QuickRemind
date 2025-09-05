@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum CategoryManager {
+enum CategoryService {
     
     // MARK: - カテゴリ名を変更し、リマインダーも更新
     static func commitRename(at index: Int,
