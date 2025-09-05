@@ -63,7 +63,7 @@ struct ContentView: View {
                 reminderList()
             }
             .sheet(isPresented: $showCategoryManager) {
-                CategoryManagerView(reminders: $reminders, categories: $categories)
+                CategoryView(reminders: $reminders, categories: $categories)
             }
             .sheet(isPresented: $showCalendarPicker) {
                 CalendarPickerView(
@@ -78,7 +78,7 @@ struct ContentView: View {
         .alert(isPresented: $showNotificationAlert) { notificationPermissionAlert() }
         .onAppear {
             loadReminders()
-            loadCategories()
+            categories = CategoryManager.loadCategories()
             NotificationPermissionManager.checkPermission { granted in
                 if !granted {
                     showNotificationAlert = true
@@ -95,7 +95,7 @@ struct ContentView: View {
             }
         }
         .onChange(of: categories) { _ in
-            saveCategories()
+            CategoryManager.saveCategories(categories: categories)
         }
     }
     
@@ -107,7 +107,7 @@ struct ContentView: View {
                 Image(systemName: "tag")
             } 
             Menu {
-                Button(action: rateApp) {
+                Button(action: AppReview.rateApp) {
                     Label(title: { Text("アプリを評価する") }, icon: { Image(systemName: "star.fill") })
                 }
                 Button(action: linkCalendar) {
@@ -313,41 +313,7 @@ struct ContentView: View {
             sortReminders()
         }
     }
-    
-    
-    // MARK: - カテゴリーを保存する
-    private func saveCategories() {
-        UserDefaults.standard.set(categories, forKey: "categories")
-    }
-    
-    
-    // MARK: - カテゴリーを読み込む
-    private func loadCategories() {
-        if let saved = UserDefaults.standard.stringArray(forKey: "categories"), !saved.isEmpty {
-            categories = saved
-        } else {
-            categories = ["カテゴリーなし"]
-            saveCategories()
-        }
-    }
-    
-    
-    // MARK: - アプリを評価する
-    @MainActor
-    func rateApp() {
-        let appID = "6751082907" // QuickRemind の App Store ID
-        // 1) まずは「レビューを書く」直行（最短）
-        if let url = URL(string: "itms-apps://itunes.apple.com/app/id\(appID)?action=write-review"),
-           UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-            return
-        }
-        // 2) 万一失敗時はアプリページへ（ユーザーが自分で★へ移動できる）
-        if let fallback = URL(string: "itms-apps://itunes.apple.com/app/id\(appID)") {
-            UIApplication.shared.open(fallback, options: [:], completionHandler: nil)
-        }
-    }
-    
+            
     
     // MARK: - カレンダーと連携する
     @MainActor
