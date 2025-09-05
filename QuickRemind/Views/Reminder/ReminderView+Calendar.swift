@@ -2,9 +2,9 @@ import SwiftUI
 import EventKit
 
 extension ReminderView {
-    // MARK: - カレンダーと連携する
+    // MARK: - Appleカレンダーと連携する
     @MainActor
-    func linkCalendar() {
+    func linkCalendars() {
         let status = EKEventStore.authorizationStatus(for: .event)
         
         switch status {
@@ -16,11 +16,11 @@ extension ReminderView {
                     self.isCalendarAuthorized = granted
                     if granted {
                         calendarMessage = "カレンダーの利用が許可されました。"
-                        showOpenSettings = false
+                        showCalendarOpenSettings = false
                         showCalendarAlert = true
                     } else {
                         calendarMessage = "カレンダーの権限が拒否されています。\n設定アプリから変更してください。"
-                        showOpenSettings = true
+                        showCalendarOpenSettings = true
                     }
                 }
             }
@@ -29,17 +29,17 @@ extension ReminderView {
             let result = CalendarService.loadEventCalendars(selectedCalendarID: selectedCalendarID)
             availableCalendars = result.calendars
             selectedCalendarID = result.selectedCalendarID
-            showOpenSettings = false
+            showCalendarOpenSettings = false
             showCalendarPicker = true
             
         case .denied, .restricted:
             calendarMessage = "カレンダーの権限がオフです。\n設定アプリで QuickRemind のカレンダーを許可してください。"
-            showOpenSettings = true
+            showCalendarOpenSettings = true
             showCalendarAlert = true
             
         @unknown default:
             calendarMessage = "フルアクセスを許可でカレンダー連携を有効にしてください。"
-            showOpenSettings = false
+            showCalendarOpenSettings = false
             showCalendarAlert = true
         }
     }

@@ -5,6 +5,9 @@ enum CalendarService {
     
     // MARK: - カレンダーに追加・更新する
     static func upsertCalendarEvent(reminder: Reminder, reminders: inout [Reminder]) {
+        print("🔔 CalendarService.upsertCalendarEvent")
+        
+        
         // 権限チェック
         guard EKEventStore.authorizationStatus(for: .event) == .authorized else {
             return
@@ -14,7 +17,7 @@ enum CalendarService {
         
         // 既存イベントがあれば取得
         var event: EKEvent? = nil
-        if let id = reminder.calendarID {
+        if let id = reminder.ekEventID {
             event = store.event(withIdentifier: id)
         }
         
@@ -36,7 +39,7 @@ enum CalendarService {
         // イベント作成
         event.title = reminder.title
         event.startDate = reminder.date
-        event.endDate = reminder.date.addingTimeInterval(60 * 30) // デフォ30分
+        event.endDate = reminder.date.addingTimeInterval(60 * 60) // デフォ30分
         event.notes = "カテゴリー：" + reminder.category
         event.calendar = store.defaultCalendarForNewEvents // 既定カレンダーに設定
         
@@ -47,7 +50,8 @@ enum CalendarService {
         do {
             try store.save(event, span: .thisEvent)
             if let idx = reminders.firstIndex(where: { $0.id == reminder.id }) {
-                reminders[idx].calendarID = event.eventIdentifier
+                reminders[idx].ekEventID = event.eventIdentifier
+                reminders[idx].eventCalendarID = event.calendar.calendarIdentifier
             }
             print("✅ カレンダーにイベントを保存しました")
         } catch {
@@ -59,7 +63,7 @@ enum CalendarService {
     // MARK: - カレンダーから削除する
     static func deleteCalendarEvent(reminder: Reminder) {
         guard EKEventStore.authorizationStatus(for: .event) == .authorized else { return }
-        guard let id = reminder.calendarID else { return }
+        guard let id = reminder.ekEventID else { return }
         
         let store = EKEventStore()
         if let e = store.event(withIdentifier: id) {

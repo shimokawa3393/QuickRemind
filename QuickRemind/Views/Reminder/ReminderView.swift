@@ -28,7 +28,7 @@ struct ReminderView: View {
     // MARK: - カレンダー連携
     private let selectedCalendarKey = "qr_selectedCalendarID"      // UserDefaults用キー
     @State var showCalendarAlert: Bool = false             // カレンダー連携のアラートを表示する
-    @State var showOpenSettings: Bool = false              // 設定画面を表示する
+    @State var showCalendarOpenSettings: Bool = false              // 設定画面を表示する
     @State var calendarMessage: String = ""                // カレンダー連携のメッセージ
     @State var calendarAuthStatus: EKAuthorizationStatus = .notDetermined // カレンダーの権限を取得する
     @State var isCalendarAuthorized = false                // カレンダーの権限を取得する
@@ -36,6 +36,17 @@ struct ReminderView: View {
     @State var selectedCalendarID: String? = UserDefaults.standard.string(forKey: "qr_selectedCalendarID")
     @State var showCalendarPicker: Bool = false            // カレンダー選択用
     
+    // MARK: - リマインダー連携
+    private let selectedReminderListKey = "qr_selectedReminderListID"       // UserDefaults用キー
+    @State var showReminderAlert: Bool = false                      // リマインダー連携のアラートを表示する
+    @State var showReminderOpenSettings: Bool = false               // 設定画面を表示する
+    @State var reminderMessage: String = ""                         // リマインダー連携のメッセージ
+    @State var reminderAuthStatus: EKAuthorizationStatus = .notDetermined // リマインダーの権限を取得する
+    @State var isReminderAuthorized = false                         // リマインダーの権限を取得する
+    @State var availableReminderLists: [EKCalendar] = []            // リマインダー選択用
+    @State var selectedReminderListID: String? = UserDefaults.standard.string(forKey: "qr_selectedReminderListID")
+    @State var showReminderPicker: Bool = false                     // リマインダー選択用
+
     // MARK: - その他
     @FocusState private var focusedID: UUID?                       // フォーカスを設定する
     
@@ -48,7 +59,7 @@ struct ReminderView: View {
                 HStack {
                     Spacer()
                     Button(action: addReminder) {
-                        Label(title: { Text("追加") }, icon: { Image(systemName: "plus.circle.fill") })
+                        Label(title: { Text("新規") }, icon: { Image(systemName: "plus.circle.fill") })
                             .font(.title2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
@@ -79,6 +90,14 @@ struct ReminderView: View {
                     showCalendarPicker = false
                 }
             }
+            .sheet(isPresented: $showReminderPicker) {
+                ReminderListPickerView(
+                    lists: availableReminderLists,
+                    selectedReminderListID: $selectedReminderListID
+                ) {
+                    showReminderPicker = false
+                }
+            }
             .navigationBarItems(trailing: actionButtons())
         }
         .alert(isPresented: $showNotificationAlert) { notificationPermissionAlert() }
@@ -91,16 +110,28 @@ struct ReminderView: View {
                 }
             }
             // カレンダーの権限を取得
-            let status = EKEventStore.authorizationStatus(for: .event)
-            calendarAuthStatus = status
-            isCalendarAuthorized = (status == .authorized)
+            let calendarStatus = EKEventStore.authorizationStatus(for: .event)
+            calendarAuthStatus = calendarStatus
+            isCalendarAuthorized = (calendarStatus == .authorized)
+
+            // リマインダーの権限を取得
+            let reminderStatus = EKEventStore.authorizationStatus(for: .reminder)
+            reminderAuthStatus = reminderStatus
+            isReminderAuthorized = (reminderStatus == .authorized)
             
-            // 既に許可済みなら一覧を先読み（UX向上）
+            // 既に許可済みなら、それぞれの一覧を先読み（UX向上）
             if isCalendarAuthorized {
                 let result = CalendarService.loadEventCalendars(selectedCalendarID: selectedCalendarID)
                 availableCalendars = result.calendars
                 selectedCalendarID = result.selectedCalendarID
             }
+            if isReminderAuthorized {
+                let result = ReminderService.loadReminderLists(selectedReminderListID: selectedReminderListID)
+                availableReminderLists = result.reminderLists
+                selectedReminderListID = result.selectedReminderListID
+            }
+
+            
         }
         .onChange(of: categories) { _ in
             CategoryService.saveCategories(categories: categories)
@@ -118,11 +149,14 @@ struct ReminderView: View {
                 Button(action: AppReview.rateApp) {
                     Label(title: { Text("アプリを評価する") }, icon: { Image(systemName: "star.fill") })
                 }
-                Button(action: linkCalendar) {
-                    Label(title: { Text("カレンダーと連携する") }, icon: { Image(systemName: "calendar.badge.exclamationmark") })
+                Button(action: linkCalendars) {
+                    Label(title: { Text("カレンダーと連携する") }, icon: { Image(systemName: "calendar") })
+                }
+                Button(action: linkReminders) {
+                    Label(title: { Text("リマインダーと連携する") }, icon: { Image(systemName: "checklist.checked") })
                 }
                 Button(action: { showHelp = true }) {
-                    Label(title: { Text("リマインダーの操作方法") }, icon: { Image(systemName: "questionmark.circle") })
+                    Label(title: { Text("QuickRemindの操作方法") }, icon: { Image(systemName: "questionmark.circle") })
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -136,14 +170,29 @@ struct ReminderView: View {
                 selectedCalendarID = result.selectedCalendarID
                 showCalendarPicker = true
             }
-            if showOpenSettings {
+            if showCalendarOpenSettings {
                 Button("設定を開く") { AppSettings.open() }
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text(calendarMessage)
         }
-        
+
+        .alert("リマインダー連携", isPresented: $showReminderAlert) {
+            Button("リマインダーを選ぶ") {
+                let result = ReminderService.loadReminderLists(selectedReminderListID: selectedReminderListID)
+                availableReminderLists = result.reminderLists
+                selectedReminderListID = result.selectedReminderListID
+                showReminderPicker = true
+            }
+            if showReminderOpenSettings {
+                Button("設定を開く") { AppSettings.open() }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text(reminderMessage)
+        }
+
         .alert("操作のヒント", isPresented: $showHelp) {
             Button("OK", role: .cancel) { }
         } message: {

@@ -50,6 +50,9 @@ extension ReminderView {
         if isCalendarAuthorized {
             CalendarService.upsertCalendarEvent(reminder: saveReminder, reminders: &reminders)
         }
+        if isReminderAuthorized {
+            ReminderService.upsertReminder(reminder: saveReminder, reminders: &reminders)
+        }
         
         saveReminders()
         sortReminders()
@@ -82,6 +85,7 @@ extension ReminderView {
         // 先に該当Reminderを捕まえてカレンダー削除
         reminders.filter { toDelete.contains($0.id) }.forEach { savedReminder in
             CalendarService.deleteCalendarEvent(reminder: savedReminder)
+            ReminderService.deleteReminder(reminder: savedReminder)
         }
         
         // 本体から削除
