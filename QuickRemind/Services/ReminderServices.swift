@@ -1,16 +1,18 @@
 import EventKit
 
 enum ReminderService {
-    private static let selectedReminderListKey = "selectedReminderListID"
+    private static let selectedReminderListKey = "qr_selectedReminderListID"
+    
+    static var selectedReminderListIDInDefaults: String? {
+        get { UserDefaults.standard.string(forKey: selectedReminderListKey) }
+        set { UserDefaults.standard.set(newValue, forKey: selectedReminderListKey) }
+    }
     
     // MARK: - リマインダーに追加・更新する
-    static func upsertReminder(reminder: Reminder, reminders: inout [Reminder]) {
-        print("🔔 ReminderService.upsertReminder")
-        
-        let status = EKEventStore.authorizationStatus(for: .reminder)
-        // iOS17以降対応：fullAccess / writeOnly を通す
-        guard status == .authorized || status == .fullAccess || status == .writeOnly else {
-            print("❌ 権限なし: \(status)")
+    static func upsertReminder(reminder: Reminder, reminders: inout [Reminder]) {                
+        let access = EKAccess.accessLevel(for: .reminder) // ← ここでアクセス状態を正規化
+        guard access != .none else {
+            print("❌ Reminders 権限なし")
             return
         }
         
@@ -23,19 +25,25 @@ enum ReminderService {
             ekReminder = item
         }
         
-        // 無ければ新規
+        // 新規なら作成＆保存先を決定
         if ekReminder == nil {
             let newR = EKReminder(eventStore: store)
             // 保存先の解決（writeOnlyはdefault固定）
             let target: EKCalendar? = {
-                if status == .writeOnly {
+                switch access {
+                case .writeOnly:
                     return store.defaultCalendarForNewReminders()
+                case .full:
+                    let selectedID = selectedReminderListIDInDefaults
+                    if let cal  = resolveTargetList(from: store, selectedReminderListID: selectedID) {
+                        return cal
+                    }
+                    if let defaultCal = store.defaultCalendarForNewReminders(), defaultCal.allowsContentModifications { return defaultCal }
+                    return store.calendars(for: .reminder).first(where: { $0.allowsContentModifications })
+                case .none:
+                    return nil
                 }
-                // fullAccess/authorized：選択があればそれ、なければdefault
-                if let cal = resolveTargetList(from: store, selectedReminderListID: reminder.eventReminderID) {
-                    return cal
-                }
-                return store.defaultCalendarForNewReminders()
+                
             }()
             guard let target else {
                 print("❌ 保存先リストが見つからない")
@@ -43,8 +51,15 @@ enum ReminderService {
             }
             newR.calendar = target
             ekReminder = newR
+        } else if EKAccess.accessLevel(for: .reminder) == .full {
+            // 既存でもフルアクセス時はユーザー選択に追従して移動（任意）
+            if let selectedID = selectedReminderListIDInDefaults,
+               let target = resolveTargetList(from: store, selectedReminderListID: selectedID),
+               ekReminder!.calendar.calendarIdentifier != target.calendarIdentifier {
+                ekReminder!.calendar = target
+            }
         }
-
+        
         // ここで Optional 解除（以降は非Optionalで扱う）
         guard let ekReminder = ekReminder else {
             print("❌ EKReminder 初期化失敗")
@@ -78,9 +93,8 @@ enum ReminderService {
     
     // MARK: - リマインダーから削除する
     static func deleteReminder(reminder: Reminder) {
-        let status = EKEventStore.authorizationStatus(for: .reminder)
-        guard status == .authorized || status == .fullAccess || status == .writeOnly else { return }
-        guard let itemID = reminder.ekItemID else { return } // ← “項目ID” で探す
+        let access = EKAccess.accessLevel(for: .reminder)
+        guard access != .none, let itemID = reminder.ekItemID else { return } // ← “項目ID” で探す
         
         let store = EKEventStore()
         if let ekReminder = store.calendarItem(withIdentifier: itemID) as? EKReminder {
@@ -99,9 +113,9 @@ enum ReminderService {
     // MARK: - 保有しているリマインダーリストを読み込む
     static func loadReminderLists(selectedReminderListID: String?) -> (reminderLists: [EKCalendar], selectedReminderListID: String?) {
         let store = EKEventStore()
-        let status = EKEventStore.authorizationStatus(for: .reminder)
-        // writeOnlyは読めない → 空を返す（UIで案内）
-        guard status == .authorized || status == .fullAccess else {
+        let access = EKAccess.accessLevel(for: .reminder)
+        // 権限なしは弾く
+        guard access == .full else {
             return ([], nil)
         }
         
@@ -126,6 +140,7 @@ enum ReminderService {
             return cal
         }
         // フォールバック：編集可能な先頭
+        if let defaultCal = store.defaultCalendarForNewReminders(), defaultCal.allowsContentModifications { return defaultCal }
         return store.calendars(for: .reminder).first(where: { $0.allowsContentModifications })
     }
 }

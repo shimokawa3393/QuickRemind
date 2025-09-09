@@ -47,11 +47,21 @@ extension ReminderView {
         }
         
         NotificationService.register(saveReminder)
-        if isCalendarAuthorized {
-            CalendarService.upsertCalendarEvent(reminder: saveReminder, reminders: &reminders)
-        }
-        if isReminderAuthorized {
-            ReminderService.upsertReminder(reminder: saveReminder, reminders: &reminders)
+        // if isCalendarAuthorized {
+        //     CalendarService.upsertCalendarEvent(reminder: saveReminder, reminders: &reminders)
+        // }
+        // if isReminderAuthorized {
+        //     ReminderService.upsertReminder(reminder: saveReminder, reminders: &reminders)
+        // }
+        
+        switch saveReminder.saveDestination {
+        case .appOnly:
+            // アプリ内DBへ保存（お前の既存実装）
+            break
+        case .reminders:
+            ReminderService.upsertReminder(reminder: reminder, reminders: &reminders)
+        case .calendar:
+            CalendarService.upsertCalendarEvent(reminder: reminder, reminders: &reminders)
         }
         
         saveReminders()

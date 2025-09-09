@@ -1,16 +1,26 @@
 import Foundation
 import SwiftUI // @PublishedやObservableObjectを使うために必要
 
+// MARK: - 保存先の選択肢
+enum SaveDestination: String, CaseIterable, Codable {
+    case appOnly        // アプリ内のみ
+    case reminders      // Appleリマインダー
+    case calendar       // Appleカレンダー
+}
+
 // MARK: - Reminderモデル
 class Reminder: Identifiable, ObservableObject, Equatable{ // Identifiable: 識別子を持つことができるようにする、ObservableObject: オブジェクトの変更を監視することができるようにする、Equatable: 等価性を比較することができるようにする
     static func == (lhs: Reminder, rhs: Reminder) -> Bool { // 等価性を比較する
         return lhs.id == rhs.id // 識別子を比較する
-               
-    }   
+        
+    }
     let id: UUID // 識別子を生成する
     @Published var title: String
     @Published var date: Date
     @Published var category: String
+    
+    // 保存先
+    @Published var saveDestination: SaveDestination = .appOnly
     
     // Reminders.app 用
     @Published var ekItemID: String?        // EKReminder.itemID
@@ -21,12 +31,12 @@ class Reminder: Identifiable, ObservableObject, Equatable{ // Identifiable: 識�
     @Published var eventCalendarID: String? // 保存先(EKCalendar.event).id
     
     
-    init(id: UUID, 
-         title: String, 
-         date: Date, 
-         category: String, 
+    init(id: UUID,
+         title: String,
+         date: Date,
+         category: String,
          ekItemID: String? = nil,
-         eventReminderID: String? = nil, 
+         eventReminderID: String? = nil,
          ekEventID: String? = nil,
          eventCalendarID: String? = nil
          
@@ -56,12 +66,12 @@ struct ReminderData: Codable {
     var eventCalendarID: String?
     
     func toReminder() -> Reminder {
-        Reminder(id: id, 
-                 title: title, 
-                 date: date, 
-                 category: category, 
+        Reminder(id: id,
+                 title: title,
+                 date: date,
+                 category: category,
                  ekItemID: ekItemID,
-                 eventReminderID: eventReminderID, 
+                 eventReminderID: eventReminderID,
                  ekEventID: ekEventID,
                  eventCalendarID: eventCalendarID)
     }

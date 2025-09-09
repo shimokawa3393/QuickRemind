@@ -25,25 +25,26 @@ struct CalendarPickerView: View {
                 // 型を明示して推論を助ける
                 let items: [EKCalendar] = editableCalendars
                 Picker("保存先カレンダー", selection: selectionBinding) {
-                    ForEach(items, id: \.calendarIdentifier) { (cal: EKCalendar) in // ← ここ
-                        Text("\(cal.title) ・ \(cal.source.title)")
-                            .tag(cal.calendarIdentifier as String) // ← tagの型も明示
+                    if items.isEmpty {
+                        // 権限オフ or カレンダーなしのときにメッセージ表示
+                        Text("保存可能なカレンダーがありません。\n権限がオフです。")
+                    } else {
+                        ForEach(items, id: \.calendarIdentifier) { cal in
+                            Text("\(cal.title) ・ \(cal.source.title)")
+                                .tag(cal.calendarIdentifier)
+                        }
                     }
                 }
                 .pickerStyle(.inline)
             }
-            .navigationTitle("保存先カレンダー")
+            .navigationTitle("予定の保存先")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { onClose() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("選択") {
-                        if let id = selectedCalendarID {
-                            UserDefaults.standard.set(id, forKey: "qr_selectedCalendarID")
-                        } else {
-                            UserDefaults.standard.removeObject(forKey: "qr_selectedCalendarID")
-                        }
+                        CalendarService.selectedCalendarIDInDefaults = selectedCalendarID
                         onClose()
                     }
                 }

@@ -1,15 +1,18 @@
 import EventKit
 
 enum CalendarService {
-    private static let selectedCalendarKey = "selectedCalendarID"
+    private static let selectedCalendarKey = "qr_selectedCalendarID"
+    
+    static var selectedCalendarIDInDefaults: String? {
+        get { UserDefaults.standard.string(forKey: selectedCalendarKey) }
+        set { UserDefaults.standard.set(newValue, forKey: selectedCalendarKey) }
+    }
     
     // MARK: - カレンダーに追加・更新する
     static func upsertCalendarEvent(reminder: Reminder, reminders: inout [Reminder]) {
-        print("🔔 CalendarService.upsertCalendarEvent")
-        
-        
-        // 権限チェック
-        guard EKEventStore.authorizationStatus(for: .event) == .authorized else {
+        let access = EKAccess.accessLevel(for: .event)
+        guard access != .none else {
+            print("❌ Calendar 権限なし")
             return
         }
         
@@ -23,12 +26,33 @@ enum CalendarService {
         
         // 無ければ新規
         if event == nil {
-            event = EKEvent(eventStore: store)
-            guard let target = resolveTargetCalendar(from: store, selectedCalendarID: nil) else {
-                print("❌ 保存先カレンダーが見つからない")
-                return
+            let newEvent = EKEvent(eventStore: store)
+            let target: EKCalendar? = {
+                switch access {
+                case .writeOnly:
+                    // 読めないので default 固定
+                    return store.defaultCalendarForNewEvents
+                case .full:
+                    if let selectedID = selectedCalendarIDInDefaults,
+                       let cal = resolveTargetCalendar(from: store, selectedCalendarID: selectedID) {
+                        return cal
+                    }
+                    if let def = store.defaultCalendarForNewEvents, def.allowsContentModifications { return def }
+                    return store.calendars(for: .event).first(where: { $0.allowsContentModifications })
+                case .none:
+                    return nil
+                }
+            }()
+            guard let target else { print("❌ 保存先カレンダーなし"); return }
+            newEvent.calendar = target
+            event = newEvent
+        } else if access == .full {
+            // 既存イベントでもユーザー選択に追従（任意）
+            if let selectedID = selectedCalendarIDInDefaults,
+               let target = resolveTargetCalendar(from: store, selectedCalendarID: selectedID),
+               event!.calendar.calendarIdentifier != target.calendarIdentifier {
+                event!.calendar = target
             }
-            event?.calendar = target
         }
         
         guard let event = event else {
@@ -39,9 +63,8 @@ enum CalendarService {
         // イベント作成
         event.title = reminder.title
         event.startDate = reminder.date
-        event.endDate = reminder.date.addingTimeInterval(60 * 60) // デフォ30分
+        event.endDate = reminder.date.addingTimeInterval(60 * 60) // デフォ60分
         event.notes = "カテゴリー：" + reminder.category
-        event.calendar = store.defaultCalendarForNewEvents // 既定カレンダーに設定
         
         // 🔔 通知（既存アラームをクリアしてから付け直す）
         event.alarms = []  // ← 重要：編集のたびに積み上がるのを防止
@@ -62,8 +85,8 @@ enum CalendarService {
     
     // MARK: - カレンダーから削除する
     static func deleteCalendarEvent(reminder: Reminder) {
-        guard EKEventStore.authorizationStatus(for: .event) == .authorized else { return }
-        guard let id = reminder.ekEventID else { return }
+        let access = EKAccess.accessLevel(for: .event)
+        guard access != .none, let id = reminder.ekEventID else { return }
         
         let store = EKEventStore()
         if let e = store.event(withIdentifier: id) {
@@ -80,7 +103,11 @@ enum CalendarService {
     // MARK: - 保有しているカレンダーアプリを読み込む（アクセス権限付与後に実行）
     static func loadEventCalendars(selectedCalendarID: String?) -> (calendars: [EKCalendar], selectedCalendarID: String?) {
         let store = EKEventStore()
-        // 書き込み不可を弾く（Google共有など読み取り専用が混ざる）
+        let access = EKAccess.accessLevel(for: .event)
+        // 権限なしは弾く
+        guard access == .full else {
+            return ([], nil)
+        }
         let all = store.calendars(for: .event).filter { $0.allowsContentModifications }
         
         // 以前の選択が消えてたらリセット

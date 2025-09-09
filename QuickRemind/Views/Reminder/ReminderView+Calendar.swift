@@ -19,7 +19,7 @@ extension ReminderView {
                         showCalendarOpenSettings = false
                         showCalendarAlert = true
                     } else {
-                        calendarMessage = "カレンダーの権限が拒否されています。\n設定アプリから変更してください。"
+                        calendarMessage = "カレンダーの権限が拒否されています。\n設定アプリからフルアクセスを許可してください。"
                         showCalendarOpenSettings = true
                     }
                 }
@@ -33,13 +33,13 @@ extension ReminderView {
             showCalendarPicker = true
             
         case .denied, .restricted:
-            calendarMessage = "カレンダーの権限がオフです。\n設定アプリで QuickRemind のカレンダーを許可してください。"
+            calendarMessage = "カレンダーの権限がオフです。\n設定アプリからフルアクセスを許可してください。"
             showCalendarOpenSettings = true
             showCalendarAlert = true
             
         @unknown default:
             calendarMessage = "フルアクセスを許可でカレンダー連携を有効にしてください。"
-            showCalendarOpenSettings = false
+            showCalendarOpenSettings = true
             showCalendarAlert = true
         }
     }

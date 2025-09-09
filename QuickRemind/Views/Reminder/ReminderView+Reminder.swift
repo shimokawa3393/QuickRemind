@@ -33,13 +33,13 @@ extension ReminderView {
             showReminderPicker = true
             
         case .denied, .restricted:
-            reminderMessage = "リマインダーの権限がオフです。\n設定アプリで QuickRemind のリマインダーを許可してください。"
+            reminderMessage = "リマインダーの権限がオフです。\n設定アプリから変更してください。"
             showReminderOpenSettings = true
             showReminderAlert = true
             
         @unknown default:
             reminderMessage = "フルアクセスを許可でリマインダー連携を有効にしてください。"
-            showReminderOpenSettings = false
+            showReminderOpenSettings = true
             showReminderAlert = true
         }
     }

@@ -46,7 +46,7 @@ struct ReminderView: View {
     @State var availableReminderLists: [EKCalendar] = []            // リマインダー選択用
     @State var selectedReminderListID: String? = UserDefaults.standard.string(forKey: "qr_selectedReminderListID")
     @State var showReminderPicker: Bool = false                     // リマインダー選択用
-
+    
     // MARK: - その他
     @FocusState private var focusedID: UUID?                       // フォーカスを設定する
     
@@ -113,7 +113,7 @@ struct ReminderView: View {
             let calendarStatus = EKEventStore.authorizationStatus(for: .event)
             calendarAuthStatus = calendarStatus
             isCalendarAuthorized = (calendarStatus == .authorized)
-
+            
             // リマインダーの権限を取得
             let reminderStatus = EKEventStore.authorizationStatus(for: .reminder)
             reminderAuthStatus = reminderStatus
@@ -130,7 +130,7 @@ struct ReminderView: View {
                 availableReminderLists = result.reminderLists
                 selectedReminderListID = result.selectedReminderListID
             }
-
+            
             
         }
         .onChange(of: categories) { _ in
@@ -146,14 +146,14 @@ struct ReminderView: View {
                 Image(systemName: "tag")
             }
             Menu {
-                Button(action: AppReview.rateApp) {
-                    Label(title: { Text("アプリを評価する") }, icon: { Image(systemName: "star.fill") })
-                }
                 Button(action: linkCalendars) {
-                    Label(title: { Text("カレンダーと連携する") }, icon: { Image(systemName: "calendar") })
+                    Label(title: { Text("Appleカレンダーに\n保存する") }, icon: { Image(systemName: "calendar") })
                 }
                 Button(action: linkReminders) {
-                    Label(title: { Text("リマインダーと連携する") }, icon: { Image(systemName: "checklist.checked") })
+                    Label(title: { Text("Appleリマインダーに\n保存する") }, icon: { Image(systemName: "checklist.checked") })
+                }
+                Button(action: AppReview.rateApp) {
+                    Label(title: { Text("アプリを評価する") }, icon: { Image(systemName: "star.fill") })
                 }
                 Button(action: { showHelp = true }) {
                     Label(title: { Text("QuickRemindの操作方法") }, icon: { Image(systemName: "questionmark.circle") })
@@ -177,7 +177,7 @@ struct ReminderView: View {
         } message: {
             Text(calendarMessage)
         }
-
+        
         .alert("リマインダー連携", isPresented: $showReminderAlert) {
             Button("リマインダーを選ぶ") {
                 let result = ReminderService.loadReminderLists(selectedReminderListID: selectedReminderListID)
@@ -192,7 +192,7 @@ struct ReminderView: View {
         } message: {
             Text(reminderMessage)
         }
-
+        
         .alert("操作のヒント", isPresented: $showHelp) {
             Button("OK", role: .cancel) { }
         } message: {

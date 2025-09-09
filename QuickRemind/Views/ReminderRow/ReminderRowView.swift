@@ -19,6 +19,20 @@ struct ReminderRowView: View {
     private var minSelectableDate: Date {
         Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
     }
+
+    // MARK: - 権限状態
+    var reminderAccess: EKAccess { EKAccess.accessLevel(for: .reminder) }
+    var calendarAccess: EKAccess { EKAccess.accessLevel(for: .event) }
+
+    // ピッカー表示可否（どちらかが権限ありなら表示）
+    var canShowDestinationPicker: Bool {
+        reminderAccess == .full || calendarAccess == .full
+    }
+
+    // 選択肢の可否
+    var canUseReminders: Bool { reminderAccess == .full } 
+    var canUseCalendar:  Bool { calendarAccess  == .full } 
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,7 +54,23 @@ struct ReminderRowView: View {
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                
+                if canShowDestinationPicker {
+                    Picker("保存先", selection: $reminder.saveDestination) {
+                        Text("アプリ内のみ").tag(SaveDestination.appOnly)
+                        if canUseCalendar  { Text("＋Appleカレンダー").tag(SaveDestination.calendar) }
+                        if canUseReminders { Text("＋Appleリマインダー").tag(SaveDestination.reminders) }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    // 利用不可の選択肢に入っていた場合は強制補正
+                    .onAppear { normalizeDestination() }
+                    .onChange(of: reminder.title) { _ in normalizeDestination() } // 編集中に権限変更された場合の保険
+                    .onChange(of: reminder.date)  { _ in normalizeDestination() }
+
+                } else {
+                    // 権限オフ時は表示しない＋強制的にアプリ内のみ
+                    EmptyView()
+                        .onAppear { reminder.saveDestination = .appOnly }
+                }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(reminder.title.isEmpty ? "（タイトルなし）" : reminder.title)

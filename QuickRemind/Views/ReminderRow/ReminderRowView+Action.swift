@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension ReminderRowView {
-    // MARK: - リマインダーを登録する
+    // MARK: - リマインダーの通知を登録する
     func registerAndClose(_ reminder: Reminder) {
         if reminder.date < Date() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -28,5 +28,23 @@ extension ReminderRowView {
         
         onRegister()
         editingReminder = nil
+    }
+
+
+    // MARK: - 保存先の強制補正
+    func normalizeDestination() {
+        // 権限オフ → appOnly 強制
+        if !canShowDestinationPicker {
+            if reminder.saveDestination != .appOnly { reminder.saveDestination = .appOnly }
+            return
+        }
+        // Reminders 不可なら Reminders を弾く
+        if reminder.saveDestination == .reminders && !canUseReminders {
+            reminder.saveDestination = canUseCalendar ? .calendar : .appOnly
+        }
+        // Calendar 不可なら Calendar を弾く
+        if reminder.saveDestination == .calendar && !canUseCalendar {
+            reminder.saveDestination = canUseReminders ? .reminders : .appOnly
+        }
     }
 }
