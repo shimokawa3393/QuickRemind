@@ -1,12 +1,14 @@
 import SwiftUI
 import Foundation
 import UserNotifications
+import EventKit
 
 // MARK: - リマインダーの行を表示するためのビュー
 struct ReminderRowView: View {
     @ObservedObject var reminder: Reminder
     @Binding var editingReminder: Reminder?
     @Binding var showAlert: Bool
+    
     var onRegister: () -> Void
     var categories: [String]
     var focused: FocusState<UUID?>.Binding
@@ -15,24 +17,36 @@ struct ReminderRowView: View {
         editingReminder?.id == reminder.id
     }
 
-    // MARK: - 最小選択可能日時を設定する
-    private var minSelectableDate: Date {
-        Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
+
+    // MARK: - 分丸め設定
+    @AppStorage(kMinuteGranularityKey) private var minuteGranularityRaw = MinuteGranularity.min15.rawValue
+    @AppStorage(kRoundingModeKey)      private var roundingModeRaw = "nearest"
+
+    private var minuteGranularity: MinuteGranularity {
+        MinuteGranularity(rawValue: minuteGranularityRaw) ?? .min15
+    }
+    private var roundingMode: RoundingMode {
+        switch roundingModeRaw { case "up": .up; case "down": .down; default: .nearest }
     }
 
+    func roundedDate(date: Date) -> Date {
+        date.rounded(toMinuteInterval: minuteGranularity.minuteInterval, mode: roundingMode)
+    }
+
+    
     // MARK: - 権限状態
     var reminderAccess: EKAccess { EKAccess.accessLevel(for: .reminder) }
     var calendarAccess: EKAccess { EKAccess.accessLevel(for: .event) }
-
+    
     // ピッカー表示可否（どちらかが権限ありなら表示）
     var canShowDestinationPicker: Bool {
         reminderAccess == .full || calendarAccess == .full
     }
-
+    
     // 選択肢の可否
-    var canUseReminders: Bool { reminderAccess == .full } 
-    var canUseCalendar:  Bool { calendarAccess  == .full } 
-
+    var canUseReminders: Bool { reminderAccess == .full }
+    var canUseCalendar:  Bool { calendarAccess  == .full }
+    
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -42,12 +56,28 @@ struct ReminderRowView: View {
                     .disableAutocorrection(true)                   // 自動修正を無効化
                     .textInputAutocapitalization(.never)           // テキストフィールドのキャピタライゼーションを無効化
                     .focused(focused, equals: reminder.id)                        // フォーカスを設定
-                
-                DatePicker("日時",
-                           selection: $reminder.date,
-                           in: minSelectableDate...,
-                           displayedComponents: [.date, .hourAndMinute])
-                
+                                
+                // UI は5分刻みのホイール、かつ 値は常に丸める
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("日時")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        // 値は常に丸めて反映（最近接/上/下のモードも適用）
+                        MinuteIntervalDatePicker(
+                            date: Binding(
+                                get: { reminder.date },
+                                set: { newValue in
+                                    reminder.date = roundedDate(date: newValue)
+                                }
+                            ),
+                            minuteInterval: minuteGranularity.minuteInterval
+                        )
+                    }
+                }
                 Picker("カテゴリー", selection: $reminder.category) {
                     ForEach(categories, id: \.self) { cat in
                         Text(cat).tag(cat)
@@ -65,7 +95,7 @@ struct ReminderRowView: View {
                     .onAppear { normalizeDestination() }
                     .onChange(of: reminder.title) { _ in normalizeDestination() } // 編集中に権限変更された場合の保険
                     .onChange(of: reminder.date)  { _ in normalizeDestination() }
-
+                    
                 } else {
                     // 権限オフ時は表示しない＋強制的にアプリ内のみ
                     EmptyView()
@@ -101,10 +131,6 @@ struct ReminderRowView: View {
             if editingReminder?.id == reminder.id {
                 registerAndClose(reminder)
             } else {
-                // ここで最低1分先に寄せる（現在や過去を選んでいても救済）
-                if reminder.date <= Date() {
-                    reminder.date = minSelectableDate
-                }
                 editingReminder = reminder
             }
         }

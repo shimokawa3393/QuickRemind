@@ -50,6 +50,22 @@ struct ReminderView: View {
     // MARK: - その他
     @FocusState private var focusedID: UUID?                       // フォーカスを設定する
     
+    // MARK: - 分丸め設定
+    @AppStorage(kMinuteGranularityKey) private var minuteGranularityRaw = MinuteGranularity.min15.rawValue
+    @AppStorage(kRoundingModeKey)      private var roundingModeRaw = "nearest"
+
+    private var minuteGranularity: MinuteGranularity {
+        MinuteGranularity(rawValue: minuteGranularityRaw) ?? .min15
+    }
+    private var roundingMode: RoundingMode {
+        switch roundingModeRaw { case "up": .up; case "down": .down; default: .nearest }
+    }
+
+    func roundedDate(date: Date) -> Date {
+        date.rounded(toMinuteInterval: minuteGranularity.minuteInterval, mode: roundingMode)
+    }
+
+    
     
     var body: some View {
         NavigationView {
@@ -141,7 +157,7 @@ struct ReminderView: View {
     
     // MARK: - アクションボタンを表示する
     private func actionButtons() -> some View {
-        HStack {
+        HStack {            
             Button(action: { showCategoryManager = true }) {
                 Image(systemName: "tag")
             }
@@ -232,7 +248,7 @@ struct ReminderView: View {
                         editingReminder: $editingReminder,
                         showAlert: $showAlert,
                         onRegister: {
-                            tryRegister(reminder)
+                            registerWithRoundedDate(reminder)
                             sortReminders()
                         },
                         categories: categories,
@@ -249,7 +265,7 @@ struct ReminderView: View {
                 // 描画完了後にスクロール
                 DispatchQueue.main.async {
                     withAnimation(.easeInOut) {
-                        proxy.scrollTo(id, anchor: UnitPoint.center) // ★ UnitPointを明示
+                        proxy.scrollTo(id, anchor: UnitPoint.center) // UnitPointを明示
                     }
                     focusedID = id
                 }

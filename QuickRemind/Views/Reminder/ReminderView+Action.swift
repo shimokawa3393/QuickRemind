@@ -20,48 +20,57 @@ extension ReminderView {
         ? (categories.first ?? "カテゴリーなし")
         : selectedCategory
         
+        let now = Date()
+        let initialDate = roundedDate(date: now.addingTimeInterval(60)) // “今”が59秒台でも次のスロットに吸着
         let newReminder = Reminder(
             id: UUID(),
             title: "",
-            date: Date().addingTimeInterval(60),
+            date: initialDate,
             category: selected
         )
         
-        reminders.append(newReminder)
+        reminders.insert(newReminder, at: 0)
         editingReminder = newReminder // ← これがトリガーになってスクロール＆フォーカスが走る
     }
     
     
+    // MARK: - 丸めてから登録する（UIだけに頼らない二重防御）
+    func registerWithRoundedDate(_ reminder: Reminder) {
+        var rounded = reminder
+        // ここで remindAt 的な日時プロパティ名に合わせて置き換える
+        // 例: rounded.triggerDate = roundedDate(reminder.triggerDate)
+        //     rounded.fireDate    = roundedDate(reminder.fireDate)
+        // モデルの日時プロパティ名に1行で合わせる
+        rounded.date = roundedDate(date: reminder.date)
+        
+        tryRegister(rounded: rounded)   // 既存の登録処理を呼ぶ
+    }
+    
+    
     // MARK: - リマインダーを登録する
-    func tryRegister(_ reminder: Reminder) {
-        if reminder.date <= Date() {
+    func tryRegister(rounded: Reminder) {
+        if rounded.date <= Date() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 showAlert = true
             }
             return
         }
         
-        var saveReminder = reminder
+        var saveReminder = rounded
         if saveReminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             saveReminder.title = "（タイトルなし）"
         }
         
         NotificationService.register(saveReminder)
-        // if isCalendarAuthorized {
-        //     CalendarService.upsertCalendarEvent(reminder: saveReminder, reminders: &reminders)
-        // }
-        // if isReminderAuthorized {
-        //     ReminderService.upsertReminder(reminder: saveReminder, reminders: &reminders)
-        // }
         
         switch saveReminder.saveDestination {
         case .appOnly:
             // アプリ内DBへ保存（お前の既存実装）
             break
         case .reminders:
-            ReminderService.upsertReminder(reminder: reminder, reminders: &reminders)
+            ReminderService.upsertReminder(reminder: rounded, reminders: &reminders)
         case .calendar:
-            CalendarService.upsertCalendarEvent(reminder: reminder, reminders: &reminders)
+            CalendarService.upsertCalendarEvent(reminder: rounded, reminders: &reminders)
         }
         
         saveReminders()
