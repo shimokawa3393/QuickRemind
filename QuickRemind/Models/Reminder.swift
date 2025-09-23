@@ -60,20 +60,23 @@ struct ReminderData: Codable {
     var title: String
     var date: Date
     var category: String
+    var saveDestination: SaveDestination?
     var ekItemID: String?
     var eventReminderID: String?
     var ekEventID: String?
     var eventCalendarID: String?
     
     func toReminder() -> Reminder {
-        Reminder(id: id,
-                 title: title,
-                 date: date,
-                 category: category,
-                 ekItemID: ekItemID,
-                 eventReminderID: eventReminderID,
-                 ekEventID: ekEventID,
-                 eventCalendarID: eventCalendarID)
+        let reminder = Reminder(id: id,
+                               title: title,
+                               date: date,
+                               category: category,
+                               ekItemID: ekItemID,
+                               eventReminderID: eventReminderID,
+                               ekEventID: ekEventID,
+                               eventCalendarID: eventCalendarID)
+        reminder.saveDestination = saveDestination ?? .appOnly
+        return reminder
     }
     
     init(from reminder: Reminder) {
@@ -81,6 +84,7 @@ struct ReminderData: Codable {
         self.title = reminder.title
         self.date = reminder.date
         self.category = reminder.category
+        self.saveDestination = reminder.saveDestination
         self.ekItemID = reminder.ekItemID
         self.eventReminderID = reminder.eventReminderID
         self.ekEventID = reminder.ekEventID

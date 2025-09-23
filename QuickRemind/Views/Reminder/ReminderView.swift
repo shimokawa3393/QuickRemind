@@ -54,10 +54,10 @@ struct ReminderView: View {
     @AppStorage(kMinuteGranularityKey) private var minuteGranularityRaw = MinuteGranularity.min15.rawValue
     @AppStorage(kRoundingModeKey)      private var roundingModeRaw = "nearest"
 
-    private var minuteGranularity: MinuteGranularity {
-        MinuteGranularity(rawValue: minuteGranularityRaw) ?? .min15
+    var minuteGranularity: MinuteGranularity {
+        MinuteGranularity(rawValue: minuteGranularityRaw) ?? .min5
     }
-    private var roundingMode: RoundingMode {
+    var roundingMode: RoundingMode {
         switch roundingModeRaw { case "up": .up; case "down": .down; default: .nearest }
     }
 
@@ -158,6 +158,35 @@ struct ReminderView: View {
     // MARK: - アクションボタンを表示する
     private func actionButtons() -> some View {
         HStack {            
+            Menu {
+                Button(action: { 
+                    minuteGranularityRaw = MinuteGranularity.min1.rawValue
+                }) {
+                    Label("1分刻み", systemImage: "1.circle")
+                }
+                Button(action: { 
+                    minuteGranularityRaw = MinuteGranularity.min5.rawValue
+                }) {
+                    Label("5分刻み", systemImage: "5.circle")
+                }
+                Button(action: { 
+                    minuteGranularityRaw = MinuteGranularity.min15.rawValue
+                }) {
+                    Label("15分刻み", systemImage: "15.circle")
+                }
+                Button(action: { 
+                    minuteGranularityRaw = MinuteGranularity.min30.rawValue
+                }) {
+                    Label("30分刻み", systemImage: "30.circle")
+                }
+                Button(action: { 
+                    minuteGranularityRaw = MinuteGranularity.topOfHour.rawValue
+                }) {
+                    Label("1時間刻み", systemImage: "clock")
+                }
+            } label: {
+                Image(systemName: "clock.arrow.circlepath")
+            }
             Button(action: { showCategoryManager = true }) {
                 Image(systemName: "tag")
             }

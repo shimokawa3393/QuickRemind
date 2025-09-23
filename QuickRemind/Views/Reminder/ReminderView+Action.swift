@@ -21,7 +21,8 @@ extension ReminderView {
         : selectedCategory
         
         let now = Date()
-        let initialDate = roundedDate(date: now.addingTimeInterval(60)) // “今”が59秒台でも次のスロットに吸着
+        let futureDate = now.addingTimeInterval(60) // "今"が59秒台でも次のスロットに吸着
+        let initialDate = futureDate.rounded(toMinuteInterval: minuteGranularity.minuteInterval, mode: roundingMode)
         let newReminder = Reminder(
             id: UUID(),
             title: "",

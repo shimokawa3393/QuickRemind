@@ -21,12 +21,16 @@ struct ReminderRowView: View {
     // MARK: - 分丸め設定
     @AppStorage(kMinuteGranularityKey) private var minuteGranularityRaw = MinuteGranularity.min15.rawValue
     @AppStorage(kRoundingModeKey)      private var roundingModeRaw = "nearest"
+    @AppStorage(kDefaultSaveDestinationKey) private var defaultSaveDestinationRaw = SaveDestination.appOnly.rawValue
 
     private var minuteGranularity: MinuteGranularity {
         MinuteGranularity(rawValue: minuteGranularityRaw) ?? .min15
     }
     private var roundingMode: RoundingMode {
         switch roundingModeRaw { case "up": .up; case "down": .down; default: .nearest }
+    }
+    private var defaultSaveDestination: SaveDestination {
+        SaveDestination(rawValue: defaultSaveDestinationRaw) ?? .appOnly
     }
 
     func roundedDate(date: Date) -> Date {
@@ -92,9 +96,19 @@ struct ReminderRowView: View {
                     }
                     .pickerStyle(MenuPickerStyle())
                     // 利用不可の選択肢に入っていた場合は強制補正
-                    .onAppear { normalizeDestination() }
+                    .onAppear { 
+                        // 新規リマインダー作成時のみデフォルト保存先を設定
+                        if reminder.saveDestination == .appOnly && defaultSaveDestination != .appOnly {
+                            reminder.saveDestination = defaultSaveDestination
+                        }
+                        normalizeDestination() 
+                    }
                     .onChange(of: reminder.title) { _ in normalizeDestination() } // 編集中に権限変更された場合の保険
                     .onChange(of: reminder.date)  { _ in normalizeDestination() }
+                    .onChange(of: reminder.saveDestination) { newValue in
+                        // 保存先が変更されたらデフォルト値を更新
+                        defaultSaveDestinationRaw = newValue.rawValue
+                    }
                     
                 } else {
                     // 権限オフ時は表示しない＋強制的にアプリ内のみ
